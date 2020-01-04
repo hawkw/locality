@@ -12,3 +12,4 @@ default = ["std"]
 std = []
 
 [dependencies]
+spin = "0.5.2"

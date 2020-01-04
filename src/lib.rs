@@ -1,3 +1,6 @@
+#[cfg(not(feature = "std"))]
+extern crate alloc;
+
 pub(crate) mod local;
 pub(crate) mod stdlib;
 pub use self::local::Local;
