@@ -8,8 +8,8 @@ pub struct ThreadLocal {
 }
 
 impl Locality for ThreadLocal {
-    const MAX_LOCALITIES: usize = crate::stdlib::usize::MAX;
-    fn current() -> Id<Self> {
+    // const MAX_LOCALITIES: usize = crate::stdlib::usize::MAX;
+    fn current() -> Id {
         thread_local! {
             static CURRENT_ID: Cell<Option<usize>> = Cell::new(None);
         }
