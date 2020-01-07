@@ -15,9 +15,8 @@ pub(crate) use self::no_std::*;
 
 pub(crate) mod prelude {
     #![allow(unused_imports)]
-    #[cfg(not(feature = "std"))]
-    pub(crate) use crate::stdlib::alloc::{boxed::Box, string::String, vec::Vec};
-
+    //#[cfg(not(feature = "std"))]
+    //pub(crate) use crate::stdlib::alloc::{boxed::Box, string::String, vec::Vec};
     #[cfg(feature = "std")]
     pub(crate) use crate::stdlib::{boxed::Box, string::String, vec::Vec};
 }
@@ -58,30 +57,6 @@ mod no_std {
     }
 
     pub(crate) mod sync {
-        pub(crate) use alloc::sync::*;
         pub(crate) use core::sync::*;
-        pub(crate) use spin::MutexGuard;
-
-        /// This wraps `spin::Mutex` to return a `Result`, so that it can be
-        /// used with code written against `std::sync::Mutex`.
-        ///
-        /// Since `spin::Mutex` doesn't support poisoning, the `Result` returned
-        /// by `lock` will always be `Ok`.
-        #[derive(Debug, Default)]
-        pub(crate) struct Mutex<T> {
-            inner: spin::Mutex<T>,
-        }
-
-        impl<T> Mutex<T> {
-            pub(crate) fn new(data: T) -> Self {
-                Self {
-                    inner: spin::Mutex::new(data),
-                }
-            }
-
-            pub(crate) fn lock(&self) -> Result<MutexGuard<T>, ()> {
-                Ok(self.inner.lock())
-            }
-        }
     }
 }

@@ -12,3 +12,8 @@ default = ["std"]
 std = []
 
 [dependencies]
+
+[dev-dependencies]
+# Used for no-std tests
+wee_alloc = "0.4.5"
+
