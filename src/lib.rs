@@ -1,17 +1,20 @@
-pub(crate) mod default;
-pub(crate) mod local;
-pub(crate) mod stdlib;
-pub use self::local::Local;
+#![feature(const_fn)]
+#![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(feature = "std")]
-pub(crate) mod thread;
-#[cfg(feature = "std")]
-pub use self::thread::ThreadLocal;
+#[cfg(not(feature = "std"))]
+extern crate alloc;
 
-pub use self::default::DefaultLocality;
+#[doc(hidden)]
+pub mod local;
+mod stdlib;
 
-use stdlib::{any, cell::UnsafeCell, fmt, marker::PhantomData};
+#[cfg(not(feature = "std"))]
+use stdlib::{cell::UnsafeCell, fmt, marker::PhantomData, sync::atomic::Ordering};
 
+#[cfg(not(feature = "std"))]
+pub use local::{reset, set_locality};
+
+#[cfg(not(feature = "std"))]
 #[derive(Eq, PartialEq, Copy, Clone)]
 pub struct Id {
     value: usize,
@@ -19,10 +22,14 @@ pub struct Id {
 }
 
 /// A locality implementation.
+#[cfg(not(feature = "std"))]
 pub trait Locality {
+    const MAX_LOCALITIES: usize;
+
     fn current() -> Id;
 }
 
+#[cfg(not(feature = "std"))]
 impl Id {
     /// # Safety
     ///
@@ -31,27 +38,21 @@ impl Id {
     /// concurrently executing contexts can be assigned the same  guarantee that each context that can
     /// concurrently access local data has its own unique ID value.
     pub unsafe fn from_usize(value: usize) -> Self {
-        // assert!(value <= L::MAX_LOCALITIES);
+        assert!(value <= local::MAX_LOCALITIES.load(Ordering::Acquire));
         Self {
             value,
             _not_send: PhantomData,
         }
     }
 
-    // pub fn current() -> Self {
-    //     L::current()
-    // }
-
     pub(crate) unsafe fn into_usize(self) -> usize {
         self.value
     }
 }
 
+#[cfg(not(feature = "std"))]
 impl fmt::Debug for Id {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Id")
-            .field("value", &self.value)
-            // .field("locality", &any::type_name::<L>())
-            .finish()
+        f.debug_struct("Id").field("value", &self.value).finish()
     }
 }
