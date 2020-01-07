@@ -1,5 +1,5 @@
 #![feature(const_fn)]
-#![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(all(not(feature = "std"), not(doctest)), no_std)]
 
 #[cfg(not(feature = "std"))]
 extern crate alloc;
