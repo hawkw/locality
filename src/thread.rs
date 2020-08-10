@@ -3,17 +3,19 @@ use std::cell::Cell;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::thread_local;
 
-pub struct ThreadLocal {
+pub struct ThreadLocality {
     _p: (),
 }
 
-impl Locality for ThreadLocal {
-    // const MAX_LOCALITIES: usize = crate::stdlib::usize::MAX;
+/// # Safety
+///
+/// If the standard library is in use, thread locality is always safe.
+unsafe impl Locality for ThreadLocality {
     fn current() -> Id {
         thread_local! {
             static CURRENT_ID: Cell<Option<usize>> = Cell::new(None);
         }
-        static NEXT: AtomicUsize = AtomicUsize::new(0);
+        static NEXT: AtomicUsize = AtomicUsize::new(1);
         let id = CURRENT_ID.with(|curr| match curr.get() {
             Some(value) => value,
             None => {

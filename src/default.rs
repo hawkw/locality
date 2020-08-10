@@ -6,7 +6,10 @@ use crate::stdlib::{
 
 use crate::{Id, Locality};
 
+#[cfg(not(feature = "std"))]
 pub(crate) static DEFAULT_LOCALITY: AtomicPtr<fn() -> Id> = AtomicPtr::new(ptr::null_mut());
+#[cfg(feature = "std")]
+pub(crate) static DEFAULT_LOCALITY: AtomicPtr<fn() -> Id> = AtomicPtr::new(&crate::ThreadLocality::current as fn() -> Id as *mut _);
 
 pub struct SetDefaultError {
     msg: &'static str,
@@ -33,13 +36,13 @@ impl DefaultLocality {
     }
 }
 
-impl Locality for DefaultLocality {
+unsafe impl Locality for DefaultLocality {
     fn current() -> Id {
         let f = DEFAULT_LOCALITY.load(Ordering::Acquire);
         if f.is_null() {
             panic!("the default locality must be set by `locality::set_default()`");
-        } else {
-            unsafe { (*f)() }
         }
+        
+        unsafe { (*f)() }
     }
 }

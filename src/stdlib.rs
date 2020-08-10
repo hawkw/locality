@@ -15,7 +15,7 @@ pub(crate) use self::no_std::*;
 
 pub(crate) mod prelude {
     #![allow(unused_imports)]
-    #[cfg(not(feature = "std"))]
+    #[cfg(all(feature = "alloc", not(feature = "std")))]
     pub(crate) use crate::stdlib::alloc::{boxed::Box, string::String, vec::Vec};
 
     #[cfg(feature = "std")]
@@ -35,29 +35,35 @@ mod no_std {
         time, u128, u16, u32, u8, usize,
     };
 
+    #[cfg(feature = "alloc")]
     pub(crate) use alloc::{boxed, collections, rc, string, vec};
 
     pub(crate) mod borrow {
+        #[cfg(feature = "alloc")]
         pub(crate) use alloc::borrow::*;
         pub(crate) use core::borrow::*;
     }
 
     pub(crate) mod fmt {
+        #[cfg(feature = "alloc")]
         pub(crate) use alloc::fmt::*;
         pub(crate) use core::fmt::*;
     }
 
     pub(crate) mod slice {
+        #[cfg(feature = "alloc")]
         pub(crate) use alloc::slice::*;
         pub(crate) use core::slice::*;
     }
 
     pub(crate) mod str {
+        #[cfg(feature = "alloc")]
         pub(crate) use alloc::str::*;
         pub(crate) use core::str::*;
     }
 
     pub(crate) mod sync {
+        #[cfg(feature = "alloc")]
         pub(crate) use alloc::sync::*;
         pub(crate) use core::sync::*;
         pub(crate) use spin::MutexGuard;
