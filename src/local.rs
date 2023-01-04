@@ -107,7 +107,7 @@ impl<T: Send> Local<T> {
 
     /// Returns the element for the current thread, if it exists.
     pub fn get(&self) -> Option<&T> {
-        let id = Id::current().into_usize();
+        let id = dbg!(Id::current()).into_usize();
         self.get_fast(id)
     }
 

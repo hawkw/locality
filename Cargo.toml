@@ -13,3 +13,6 @@ alloc = []
 std = []
 
 [dependencies]
+
+[target.cfg('loom').dependencies]
+loom = "0.3"

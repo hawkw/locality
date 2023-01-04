@@ -20,39 +20,19 @@ use stdlib::{
 };
 
 #[derive(Eq, PartialEq, Copy, Clone)]
-pub struct Id {
+pub struct Id<L: ?Sized = DefaultLocality> {
     value: usize,
-    _p: PhantomData<UnsafeCell<()>>,
+    _p: PhantomData<(fn(L), UnsafeCell<()>)>,
 }
 
 pub unsafe trait Locality {
-    fn current() -> Id;
+    fn current_id() -> usize;
+    fn current() -> Id<Self> {
+        Id::from_usize(Self::current_id())
+    }
 }
 
-pub struct SetLocalityError {
-    _p: (),
-}
-
-#[cfg(not(feature = "std"))]
-pub(crate) static PROVIDER: AtomicPtr<fn() -> Id> = AtomicPtr::new(ptr::null_mut());
-#[cfg(feature = "std")]
-pub(crate) static PROVIDER: AtomicPtr<fn() -> Id> =
-    AtomicPtr::new(crate::ThreadLocality::current as *const fn() -> Id as *mut _);
-
-pub fn set_locality<L: Locality>() -> Result<(), SetLocalityError> {
-    let locality = L::current as *const fn() -> Id as *mut _;
-    PROVIDER
-        .compare_exchange(
-            ptr::null_mut(),
-            locality,
-            Ordering::AcqRel,
-            Ordering::Acquire,
-        )
-        .map_err(|_| SetLocalityError { _p: () })?;
-    Ok(())
-}
-
-impl Id {
+impl<L: Locality + ?Sized> Id<L> {
     /// # Safety
     ///
     /// The caller is _required_ to uphold the guarantee that the provided usize
@@ -67,15 +47,7 @@ impl Id {
     }
 
     pub fn current() -> Self {
-        let f = PROVIDER.load(Ordering::Acquire);
-        if f.is_null() {
-            panic!(
-                "when the standard library is not in use, the locality must \
-                 be set by calling `set_locality` before calling \
-                 `Id::current()`!"
-            );
-        }
-        unsafe { (mem::transmute::<_, fn() -> Id>(f))() }
+        L::current()
     }
 
     pub(crate) fn into_usize(self) -> usize {
@@ -83,11 +55,11 @@ impl Id {
     }
 }
 
-impl fmt::Debug for Id {
+impl<L: ?Sized> fmt::Debug for Id {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_tuple("Id")
-            .field(&self.value)
-            // .field("locality", &any::type_name::<L>())
+        f.debug_struct("Id")
+            .field("id", &self.value)
+            .field("locality", &any::type_name::<L>())
             .finish()
     }
 }
@@ -98,7 +70,7 @@ impl Default for Id {
     }
 }
 
-impl Hash for Id {
+impl<L: ?Sized> Hash for Id<L> {
     #[inline]
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.value.hash(state);

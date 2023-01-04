@@ -11,7 +11,7 @@ pub struct ThreadLocality {
 ///
 /// If the standard library is in use, thread locality is always safe.
 unsafe impl Locality for ThreadLocality {
-    fn current() -> Id {
+    fn current_id() -> usize {
         thread_local! {
             static CURRENT_ID: Cell<Option<usize>> = Cell::new(None);
         }
@@ -24,6 +24,6 @@ unsafe impl Locality for ThreadLocality {
                 id
             }
         });
-        unsafe { Id::from_usize(id) }
+        id
     }
 }
